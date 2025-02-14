@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>商品編集</h1>
+    <form method="POST">
+        <label for="name">商品名:</label>
+        <input type="text" name="name" value="{{ product[1] }}" required><br>
+    
+        <label for="description">商品説明:</label>
+        <input type="text" name="description" value="{{ product[2] }}"><br>
+    
+        <label for="category">カテゴリー:</label>
+        <input type="text" name="category" value="{{ product[3] }}"><br>
+    
+        <label for="price">価格:</label>
+        <input type="text" name="price" value="{{ product[4] }}" required><br>
+    
+        <button type="submit">保存</button>
+    </form>
+    
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Transaction</title>
+</head>
+<body>
+    <h1>Edit Transaction</h1>
+    <form method="POST">
+        <label for="product_id">Product:</label>
+        <select name="product_id" required>
+            {% for product in products %}
+                <option value="{{ product[0] }}" {% if product[0] == transaction[1] %}selected{% endif %}>
+                    {{ product[1] }}
+                </option>
+            {% endfor %}
+        </select><br>
+
+        <label for="quantity">Quantity:</label>
+        <input type="number" name="quantity" value="{{ transaction[2] }}" required><br>
+
+        <label for="transaction_type">Transaction Type:</label>
+        <select name="transaction_type" required>
+            <option value="in" {% if transaction[3] == 'in' %}selected{% endif %}>In</option>
+            <option value="out" {% if transaction[3] == 'out' %}selected{% endif %}>Out</option>
+        </select><br>
+
+        <label for="remarks">Remarks:</label>
+        <textarea name="remarks">{{ transaction[5] }}</textarea><br>
+
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

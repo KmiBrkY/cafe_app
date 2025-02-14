@@ -1,32 +1,50 @@
-<!-- templates/transaction_list.html -->
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>入出庫履歴</title>
+    <title>Transaction History</title>
 </head>
 <body>
-    <h2>入出庫履歴</h2>
+    <h1>Transaction History</h1>
+    <a href="{{ url_for('add_transaction_page') }}">
+        <button>入出庫追加</button>
+    </a>
     <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>商品名</th>
-            <th>数量</th>
-            <th>取引タイプ</th>
-            <th>日付</th>
-            <th>備考</th>
-        </tr>
-        {% for transaction in transactions %}
-        <tr>
-            <td>{{ transaction[0] }}</td>
-            <td>{{ transaction[1] }}</td>
-            <td>{{ transaction[2] }}</td>
-            <td>{{ transaction[3] }}</td>
-            <td>{{ transaction[4] }}</td>
-            <td>{{ transaction[5] }}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Transaction Type</th>
+                <th>Transaction Date</th>
+                <th>Remarks</th>
+                <th>Actions</th>  <!-- 編集と削除の列を追加 -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction[1] }}</td>
+                    <td>{{ transaction[2] }}</td>
+                    <td>{{ transaction[3] }}</td>
+                    <td>{{ transaction[4] }}</td>
+                    <td>{{ transaction[5] }}</td>
+                    <td>
+                        <!-- 編集ボタン -->
+                        
+                            <a href="{{ url_for('edit_transaction', transaction_id=transaction[0]) }}">
+                                <button>編集</button>
+                            </a>
+                        
+                        
+                        <!-- 削除ボタン -->
+                        <a href="{{ url_for('delete_transaction', transaction_id=transaction[0]) }}" onclick="return confirm('本当に削除しますか？');">
+                            <button>削除</button>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </body>
 </html>
