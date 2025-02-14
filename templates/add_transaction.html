@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入出庫データ追加</title>
+</head>
+<body>
+    <h2>入出庫データ追加</h2>
+    
+    <form action="/add_transaction" method="post">
+        <label for="product_id">商品:</label>
+        <select name="product_id" required>
+            {% for product in products %}
+            <option value="{{ product[0] }}">{{ product[1] }}</option>
+            {% endfor %}
+        </select>
+        <br>
+
+        <label for="quantity">数量:</label>
+        <input type="number" name="quantity" required>
+        <br>
+
+        <label for="transaction_type">取引タイプ:</label>
+        <select name="transaction_type" required>
+            <option value="入庫">入庫</option>
+            <option value="出庫">出庫</option>
+        </select>
+        <br>
+
+        <label for="remarks">備考:</label>
+        <input type="text" name="remarks">
+        <br>
+
+        <button type="submit">追加</button>
+    </form>
+
+    <br>
+    <a href="/transactions">入出庫一覧へ戻る</a>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!-- templates/transaction_list.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>入出庫履歴</title>
+</head>
+<body>
+    <h2>入出庫履歴</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>商品名</th>
+            <th>数量</th>
+            <th>取引タイプ</th>
+            <th>日付</th>
+            <th>備考</th>
+        </tr>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction[0] }}</td>
+            <td>{{ transaction[1] }}</td>
+            <td>{{ transaction[2] }}</td>
+            <td>{{ transaction[3] }}</td>
+            <td>{{ transaction[4] }}</td>
+            <td>{{ transaction[5] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
