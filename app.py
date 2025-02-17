@@ -1,5 +1,6 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # フラッシュメッセージ用
@@ -22,6 +23,10 @@ def show_products():
 # 商品を追加する関数
 @app.route('/add_product', methods=['GET', 'POST'])
 def add_product():
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+    
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
@@ -52,6 +57,10 @@ def add_product():
 # 商品を編集する関数
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 def edit_product(product_id):
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     # データベースから商品データを取得
     conn = sqlite3.connect("cafe_app.db")
     cursor = conn.cursor()
@@ -94,6 +103,10 @@ def edit_product(product_id):
 # 商品を削除する関数
 @app.route('/delete_product/<int:product_id>', methods=['GET'])
 def delete_product(product_id):
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     conn = sqlite3.connect("cafe_app.db")
     cursor = conn.cursor()
 
@@ -109,7 +122,7 @@ def delete_product(product_id):
 def get_transactions():
     conn = sqlite3.connect("cafe_app.db")  # データベースに接続
     cursor = conn.cursor()
-    
+
     # 入出庫データを取得（JOINして商品名も取得）
     cursor.execute("""
         SELECT 
@@ -123,7 +136,7 @@ def get_transactions():
         JOIN PRODUCT ON TRANSACTION_HISTORY.product_id = PRODUCT.id
         ORDER BY TRANSACTION_HISTORY.transaction_date DESC
     """)
-    
+
     transactions = cursor.fetchall()  # 取得したデータをリストとして格納
     conn.close()  # データベースを閉じる
     return transactions
@@ -132,34 +145,38 @@ def get_transactions():
 def add_transaction(product_id, quantity, transaction_type, remarks):
     if transaction_type not in ['in', 'out']:
         transaction_type = 'in'  # デフォルトで 'in' に設定
-    
+
     conn = sqlite3.connect("cafe_app.db", check_same_thread=False)
     cursor = conn.cursor()
-    
-    user_id = 1  # テストユーザーID（user_id = 1）
+
+    user_id = session.get('user_id')  # セッションからユーザーIDを取得
     
     cursor.execute("""
         INSERT INTO TRANSACTION_HISTORY (product_id, quantity, transaction_type, transaction_date, remarks, user_id)
         VALUES (?, ?, ?, datetime('now'), ?, ?)
     """, (product_id, quantity, transaction_type, remarks, user_id))
-    
+
     conn.commit()
     conn.close()
 
 # 入出庫データを追加するページ（フォーム表示）
 @app.route('/add_transaction', methods=['GET', 'POST'])
 def add_transaction_page():
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         product_id = request.form['product_id']
         quantity = request.form['quantity']
         transaction_type = request.form['transaction_type']
         remarks = request.form['remarks']
-        
+
         # 入力チェック
         if not quantity or not product_id:
             flash('商品と数量を入力してください。', 'error')
             return render_template('add_transaction.html', products=get_products())
-        
+
         add_transaction(product_id, quantity, transaction_type, remarks)
         flash('取引が追加されました！', 'success')
         return redirect(url_for('show_transactions'))  # 取引履歴ページにリダイレクト
@@ -170,6 +187,10 @@ def add_transaction_page():
 # 取引データの削除
 @app.route('/delete_transaction/<int:transaction_id>', methods=['GET'])
 def delete_transaction(transaction_id):
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     conn = sqlite3.connect("cafe_app.db")
     cursor = conn.cursor()
 
@@ -184,11 +205,19 @@ def delete_transaction(transaction_id):
 # 入出庫データの一覧を表示するページ
 @app.route('/transactions')
 def show_transactions():
+    if 'user_id' not in session:  # セッションにユーザーIDがなければログインページへリダイレクト
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     transactions = get_transactions()  # データ取得
     return render_template('transaction_list.html', transactions=transactions)
 
 @app.route('/edit_transaction/<int:transaction_id>', methods=['GET', 'POST'])
 def edit_transaction(transaction_id):
+    if 'user_id' not in session:
+        flash('ログインしてください。', 'error')
+        return redirect(url_for('login'))
+
     conn = sqlite3.connect("cafe_app.db")
     cursor = conn.cursor()
     cursor.execute("""
@@ -223,14 +252,46 @@ def edit_transaction(transaction_id):
             SET product_id = ?, quantity = ?, transaction_type = ?, remarks = ?
             WHERE id = ?
         """, (product_id, quantity, transaction_type, remarks, transaction_id))
+
         conn.commit()
         conn.close()
 
         flash('取引が更新されました！', 'success')
-        return redirect(url_for('show_transactions'))  # 取引一覧ページにリダイレクト
+        return redirect(url_for('show_transactions'))
 
-    # GET リクエストの場合は、編集フォームを表示
-    return render_template('edit_transaction.html', transaction=transaction, products=get_products())
+    products = get_products()  # 商品一覧を取得
+    return render_template('edit_transaction.html', transaction=transaction, products=products)
 
+# ログインページ
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # ユーザー情報をデータベースから確認
+        conn = sqlite3.connect("cafe_app.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, password FROM USER WHERE username=?", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user and check_password_hash(user[2], password):  # パスワードが一致する場合
+            session['user_id'] = user[0]  # ユーザーIDをセッションに保存
+            flash('ログイン成功！', 'success')
+            return redirect(url_for('show_transactions'))  # 取引履歴ページに遷移
+        else:
+            flash('ユーザー名またはパスワードが間違っています。', 'error')
+
+    return render_template('login.html')  # ログインフォームを表示
+
+# ログアウト機能
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # セッションからuser_idを削除
+    flash('ログアウトしました。', 'success')
+    return redirect(url_for('login'))  # ログインページにリダイレクト
+
+# アプリを起動
 if __name__ == '__main__':
     app.run(debug=True)
