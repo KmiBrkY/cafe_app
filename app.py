@@ -292,6 +292,36 @@ def logout():
     flash('ログアウトしました。', 'success')
     return redirect(url_for('login'))  # ログインページにリダイレクト
 
+# ユーザー登録ページ
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        role = request.form['role']
+
+        # パスワードをハッシュ化
+        hashed_password = generate_password_hash(password)
+
+        # ユーザーをデータベースに追加
+        try:
+            conn = sqlite3.connect("cafe_app.db")
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO USER (username, password, role) VALUES (?, ?, ?)",(username, hashed_password, role))
+            conn.commit()
+            conn.close()
+            flash('ユーザーが登録されました！', 'success')
+            return redirect(url_for('login'))  # ログインページにリダイレクト
+        except Exception as e:
+            flash(f'エラーが発生しました: {e}', 'error')
+
+    return render_template('register.html')  # ユーザー登録フォームを表示
+
+# トップページ
+@app.route('/')
+def index():
+    return render_template('index.html')  # index.htmlを表示
+
 # アプリを起動
 if __name__ == '__main__':
     app.run(debug=True)
